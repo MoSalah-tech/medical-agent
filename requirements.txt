@@ -1,0 +1,24 @@
+# Core Web Framework
+fastapi
+uvicorn[standard]
+python-multipart
+aiofiles
+python-dotenv
+
+# LangChain & LangGraph
+langchain
+langchain-community
+langgraph
+langchain-google-genai
+langchain-groq
+
+# Groq (Speech-to-Text)
+groq
+
+# RAG Components
+chromadb
+pypdf
+
+# Utilities
+requests
+httpx
