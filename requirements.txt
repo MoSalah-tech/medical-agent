@@ -12,11 +12,18 @@ langgraph
 langchain-google-genai
 langchain-groq
 
+# Memory checkpointing
+langgraph-checkpoint-postgres 
+psycopg[binary,pool]
+
+
 # Groq (Speech-to-Text)
 groq
 
 # RAG Components
+pgvector
 chromadb
+#faiss-cpu              # FAISS CPU version (use faiss-gpu if NVIDIA GPU available)
 pypdf
 
 # Utilities
