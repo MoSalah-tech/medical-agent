@@ -27,6 +27,7 @@ Then in a route:
 from contextlib import asynccontextmanager
 
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph
 
 from app.medical_agent.agents.nodes import (
@@ -38,8 +39,8 @@ from app.medical_agent.agents.nodes import (
     safety_check_node,
     stt_node,
 )
-from medical_agent.agents.state import AgentState
-from medical_agent.core.config import settings
+from app.medical_agent.agents.state import AgentState
+from app.medical_agent.core.config import *
 
 
 def _build_graph_skeleton() -> StateGraph:
@@ -66,16 +67,22 @@ def _build_graph_skeleton() -> StateGraph:
     return graph
 
 
-@asynccontextmanager
-async def get_compiled_graph():
-    """
-    Async context manager — AsyncPostgresSaver owns a connection pool that
-    needs to be opened once at startup and closed cleanly at shutdown, so
-    this should be entered exactly once in your FastAPI lifespan, not per
-    request.
-    """
-    async with AsyncPostgresSaver.from_conn_string(
-        settings.DATABASE_URL_PSYCOPG
-    ) as checkpointer:
-        await checkpointer.setup()  # idempotent; creates checkpoint tables on first run
-        yield _build_graph_skeleton().compile(checkpointer=checkpointer)
+# @asynccontextmanager
+# async def get_compiled_graph():
+#     """
+#     Async context manager — AsyncPostgresSaver owns a connection pool that
+#     needs to be opened once at startup and closed cleanly at shutdown, so
+#     this should be entered exactly once in your FastAPI lifespan, not per
+#     request.
+
+#     """ 
+#      async with AsyncPostgresSaver.from_conn_string(
+#          database_url_psycopg
+#      ) as checkpointer:
+#          await checkpointer.setup()  # idempotent; creates checkpoint tables on first run
+#        #yield _build_graph_skeleton().compile(checkpointer=checkpointer)
+
+def get_compiled_graph():
+     """Return compiled graph with in-memory checkpointer."""
+     checkpointer = MemorySaver()
+     return _build_graph_skeleton().compile(checkpointer=checkpointer)

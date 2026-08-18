@@ -11,7 +11,7 @@ from typing import Optional
 import groq
 from starlette.concurrency import run_in_threadpool
 
-from medical_agent.core.config import settings
+from app.medical_agent.core.config import *
 
 _client: Optional[groq.Groq] = None
 
@@ -23,7 +23,7 @@ class STTError(Exception):
 def _get_client() -> groq.Groq:
     global _client
     if _client is None:
-        _client = groq.Groq(api_key=settings.GROQ_API_KEY)
+        _client = groq.Groq(api_key=llm_api_key)
     return _client
 
 
@@ -31,7 +31,7 @@ def _transcribe_sync(audio_file_path: str) -> str:
     client = _get_client()
     with open(audio_file_path, "rb") as f:
         result = client.audio.transcriptions.create(
-            model=settings.GROQ_STT_MODEL,
+            model=groq_stt_model,
             file=f,
             response_format="text",
         )

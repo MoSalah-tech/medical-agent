@@ -15,15 +15,15 @@ from groq import Groq
 from langchain_core.messages import AIMessage, BaseMessage
 from starlette.concurrency import run_in_threadpool
 
-from medical_agent.agents.prompts import (
+from app.medical_agent.agents.prompts import (
     EMERGENCY_KEYWORDS,
     EMERGENCY_MESSAGE,
     SYSTEM_PROMPT,
     build_generation_prompt,
 )
-from medical_agent.agents.state import AgentState
-from medical_agent.core.config import settings
-from medical_agent.services import rag_service, stt_service
+from app.medical_agent.agents.state import AgentState
+from app.medical_agent.core.config import *
+from app.medical_agent.services import rag_service, stt_service
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ _ROLE_MAP = {"human": "user", "ai": "assistant", "system": "system"}
 def _get_groq_client() -> Groq:
     global _groq_client
     if _groq_client is None:
-        _groq_client = Groq(api_key=settings.GROQ_API_KEY)
+        _groq_client = Groq(api_key=llm_api_key)
     return _groq_client
 
 
@@ -159,7 +159,7 @@ async def generation_node(state: AgentState) -> AgentState:
     try:
         completion = await run_in_threadpool(
             lambda: client.chat.completions.create(
-                model=settings.GROQ_LLM_MODEL,
+                model=llm_model,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     *history,

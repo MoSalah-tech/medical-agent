@@ -11,7 +11,7 @@ model at that point.
 
 from langchain_core.tools import tool
 
-from medical_agent.services import rag_service
+from app.medical_agent.services import rag_service
 
 
 @tool

@@ -19,7 +19,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from psycopg_pool import ConnectionPool
 from pypdf import PdfReader
 
-from medical_agent.core.config import settings
+from app.medical_agent.core.config import *
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +41,11 @@ class RAGError(Exception):
 def get_embeddings() -> GoogleGenerativeAIEmbeddings:
     global _embeddings
     if _embeddings is None:
-        if settings.EMBEDDING_PROVIDER != "gemini":
-            raise RAGError(f"Unsupported embedding provider: {settings.EMBEDDING_PROVIDER}")
+        if embedding_provider != "gemini":
+            raise RAGError(f"Unsupported embedding provider: {embedding_provider}")
         _embeddings = GoogleGenerativeAIEmbeddings(
-            model=settings.GEMINI_EMBEDDING_MODEL,
-            google_api_key=settings.GEMINI_API_KEY,
+            model=gemini_embedding_model,
+            google_api_key=gemini_api_key,
         )
     return _embeddings
 
@@ -60,8 +60,8 @@ def get_vectorstore() -> PGVector:
     if _vectorstore is None:
         _vectorstore = PGVector(
             embeddings=get_embeddings(),
-            collection_name=settings.PGVECTOR_COLLECTION,
-            connection=settings.DATABASE_URL_PSYCOPG,
+            collection_name=pgvector_collection,
+            connection=database_url_psycopg,
             use_jsonb=True,
         )
     return _vectorstore
@@ -73,7 +73,7 @@ def _get_pool() -> ConnectionPool:
     and reused — avoids paying connection-setup cost on every chat turn."""
     global _pool
     if _pool is None:
-        _pool = ConnectionPool(settings.DATABASE_URL_PSYCOPG, min_size=1, max_size=5, open=True)
+        _pool = ConnectionPool(database_url_psycopg, min_size=1, max_size=5, open=True)
     return _pool
 
 
@@ -97,7 +97,7 @@ def user_has_documents(user_id: str) -> bool:
     """
     try:
         with _get_pool().connection() as conn, conn.cursor() as cur:
-            cur.execute(query, (settings.PGVECTOR_COLLECTION, user_id))
+            cur.execute(query, (pgvector_collection, user_id))
             return cur.fetchone() is not None
     except Exception as exc:
         raise RAGError(f"Failed to check document existence: {exc}") from exc
@@ -148,7 +148,7 @@ def search(query: str, user_id: str, top_k: Optional[int] = None) -> list[dict]:
     — wrap with run_in_threadpool when called from async code (see
     agents/nodes.py::retrieval_node).
     """
-    k = top_k or settings.RETRIEVAL_TOP_K
+    k = top_k or top_k
     try:
         results = get_vectorstore().similarity_search_with_score(
             query, k=k, filter={"user_id": user_id}
