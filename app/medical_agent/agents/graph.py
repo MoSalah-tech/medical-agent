@@ -57,32 +57,36 @@ def _build_graph_skeleton() -> StateGraph:
     )
     graph.add_edge("stt", "safety_check")
     graph.add_conditional_edges(
-        "safety_check",
-        route_after_safety,
-        {"emergency_response": "emergency_response", "retrieval": "retrieval"},
-    )
+    "safety_check",
+    route_after_safety,
+    {
+        "emergency_response": "emergency_response",
+        "retrieval": "retrieval",
+        "generation": "generation",   
+    },
+)
     graph.add_edge("retrieval", "generation")
     graph.add_edge("generation", END)
     graph.add_edge("emergency_response", END)
     return graph
 
 
-# @asynccontextmanager
-# async def get_compiled_graph():
-#     """
-#     Async context manager — AsyncPostgresSaver owns a connection pool that
-#     needs to be opened once at startup and closed cleanly at shutdown, so
-#     this should be entered exactly once in your FastAPI lifespan, not per
-#     request.
+@asynccontextmanager
+async def get_compiled_graph():
+    """
+    Async context manager — AsyncPostgresSaver owns a connection pool that
+    needs to be opened once at startup and closed cleanly at shutdown, so
+    this should be entered exactly once in your FastAPI lifespan, not per
+    request.
 
-#     """ 
-#      async with AsyncPostgresSaver.from_conn_string(
-#          database_url_psycopg
-#      ) as checkpointer:
-#          await checkpointer.setup()  # idempotent; creates checkpoint tables on first run
-#        #yield _build_graph_skeleton().compile(checkpointer=checkpointer)
+    """ 
+    async with AsyncPostgresSaver.from_conn_string(
+         database_url_psycopg
+     ) as checkpointer:
+         await checkpointer.setup()  # idempotent; creates checkpoint tables on first run
+         yield _build_graph_skeleton().compile(checkpointer=checkpointer)
 
-def get_compiled_graph():
-     """Return compiled graph with in-memory checkpointer."""
-     checkpointer = MemorySaver()
-     return _build_graph_skeleton().compile(checkpointer=checkpointer)
+# def get_compiled_graph():
+#      """Return compiled graph with in-memory checkpointer."""
+#      checkpointer = MemorySaver()
+#      return _build_graph_skeleton().compile(checkpointer=checkpointer)

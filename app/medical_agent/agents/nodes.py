@@ -50,7 +50,12 @@ def route_input(state: AgentState) -> str:
 
 
 def route_after_safety(state: AgentState) -> str:
-    return "emergency_response" if state.get("is_emergency") else "retrieval"
+    if state.get("is_emergency"):
+        return "emergency_response"
+    elif state.get("needs_retrieval", True):
+        return "retrieval"
+    else:
+        return "generation"
 
 
 # ---- nodes ---------------------------------------------------------------
@@ -84,70 +89,36 @@ def emergency_response_node(state: AgentState) -> AgentState:
 
 
 async def retrieval_node(state: AgentState) -> AgentState:
-    """
-    RAG is optional. Most turns will come from users who never uploaded a
-    document — this node should behave like a no-op for them, not force a
-    search. Two independent gates:
-      1. needs_retrieval — a per-turn flag callers can set False (e.g. for
-         a greeting) to skip this node's work entirely.
-      2. documents_available — whether this user has *ever* uploaded
-         anything. Checked cheaply (no embedding call) before running an
-         actual similarity search.
-    """
     if not state.get("needs_retrieval", True):
         return {**state, "documents_available": False, "retrieved_docs": [], "context": None}
 
     user_id = state.get("user_id") or "default"
+    query = state.get("raw_query", "")
+
+    if not query:
+        return {**state, "documents_available": False, "retrieved_docs": [], "context": None}
 
     try:
-        has_docs = await run_in_threadpool(rag_service.user_has_documents, user_id)
-    except rag_service.RAGError as exc:
-        logger.exception("Document existence check failed for session %s", state.get("session_id"))
-        return {
-            **state,
-            "error": str(exc),
-            "documents_available": False,
-            "retrieved_docs": [],
-            "context": None,
-        }
-
-    if not has_docs:
-        # No documents uploaded at all — skip the search entirely and let
-        # generation fall back to the model's general medical knowledge.
-        return {
-            **state,
-            "documents_available": False,
-            "retrieved_docs": [],
-            "context": None,
-            "step_count": state.get("step_count", 0) + 1,
-        }
-
-    try:
-        docs = await run_in_threadpool(
-            rag_service.search, state.get("raw_query", ""), user_id
-        )
+        docs = await run_in_threadpool(rag_service.search, query, user_id)
     except rag_service.RAGError as exc:
         logger.exception("Retrieval failed for session %s", state.get("session_id"))
         return {
             **state,
             "error": str(exc),
-            "documents_available": True,
+            "documents_available": False,
             "retrieved_docs": [],
             "context": None,
         }
 
-    # Docs exist for this user, but none matched this specific question —
-    # still worth telling the model that, vs. "no docs uploaded at all".
     context = "\n\n".join(f"[{d['source']}] {d['content']}" for d in docs) if docs else None
 
     return {
         **state,
-        "documents_available": True,
+        "documents_available": bool(docs),
         "retrieved_docs": docs,
         "context": context,
         "step_count": state.get("step_count", 0) + 1,
     }
-
 
 async def generation_node(state: AgentState) -> AgentState:
     client = _get_groq_client()
