@@ -5,6 +5,14 @@ python-multipart
 aiofiles
 python-dotenv
 
+# authentication
+asyncpg
+slowapi
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+pydantic[email]
+
 # LangChain & LangGraph
 langchain
 langchain-community
