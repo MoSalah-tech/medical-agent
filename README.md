@@ -53,4 +53,129 @@ An AI-powered medical assistant built with **FastAPI**, **LangGraph**, and **pgv
 
 ---
 
-## Architecture
+The agent uses a **checkpointed state graph** to remember conversation context and ensure safe routing.
+
+
+
+---
+
+## Setup Instructions
+
+### 1. Clone the Repository
+Using uv (recommended):
+
+```bash
+git clone https://github.com/MoSalah-tech/medical-agent.git
+cd medical-agent
+```
+### 2.  Create Virtual Environment
+
+```bash
+uv venv .venv
+source .venv/bin/activate   # On Windows: .venv\Scripts\activate
+```
+Or with standard venv:
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Install Dependencies
+With uv:
+```bash
+uv pip install -r requirements.txt
+```
+
+Or with pip:
+```bash
+pip install -r requirements.txt
+```
+### 4. Set Up Environment Variables
+Copy .env.example to .env and fill in the values:
+
+**Note** DATABASE_URL_ASYNC must use +asyncpg driver. DATABASE_URL_PSYCOPG is for LangGraph checkpointer and pgvector.
+
+### 5.  Database Setup (Supabase)
+
+-Create a Supabase project.
+-Enable the vector extension.
+-Run the SQL script to create the necessary tables (or let the app create them automatically for app tables, but for checkpoint tables, the app will create them via AsyncPostgresSaver.setup()).
+
+
+If you want to create the vector tables manually, run:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+The application will create langchain_pg_embedding and langchain_pg_collection when you first upload a document.
+
+### 6. Run the Server
+```bash
+uvicorn app.medical_agent.main:app --reload
+```
+
+The server will start at http://127.0.0.1:8000.
+
+## API Endpoints
+
+### Health Check
+
+- `GET /health`
+
+### Authentication
+
+- `POST /api/v1/auth/register`
+
+  Request body:
+  ```json
+  {
+    "email": "user@example.com",
+    "password": "secure123",
+    "full_name": "John Doe"
+  }
+  ```
+
+- `POST /api/v1/auth/login`
+
+  Form data: `username` (email), `password`
+  Returns JWT token.
+
+### Chat
+
+- `POST /api/v1/chat`
+
+  Requires `Authorization: Bearer <token>` header.
+
+  Body:
+  ```json
+  {
+    "text": "I have a headache and fever",
+    "session_id": null
+  }
+  ```
+
+### Voice Input
+
+- `POST /api/v1/voice`
+
+  Requires `Authorization` header.
+
+  `multipart/form-data` with:
+  - `audio`: audio file
+  - `session_id`: (optional)
+
+### File Upload (RAG)
+
+- `POST /api/v1/files/upload`
+
+  Requires `Authorization` header.
+
+  `multipart/form-data` with:
+  - `file`: PDF file
+    
+
+
+
+
+
