@@ -21,10 +21,10 @@ async def create_user(db: AsyncSession, user_data: UserCreate) -> User:
     await db.refresh(user)
     return user
 
-async def authenticate_user(db: AsyncSession, login_data: UserLogin) -> User:
-    result = await db.execute(select(User).where(User.email == login_data.email))
+async def authenticate_user(db: AsyncSession, email: str, password: str) -> User:
+    result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
-    if not user or not verify_password(login_data.password, user.hashed_password):
+    if not user or not verify_password(password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     return user
 

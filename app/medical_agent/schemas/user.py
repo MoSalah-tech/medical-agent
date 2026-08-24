@@ -9,12 +9,14 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+import uuid
+from pydantic import BaseModel, EmailStr, ConfigDict
+
 class UserOut(BaseModel):
-    id: str
+    id: uuid.UUID
     email: EmailStr
     full_name: str = None
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class Token(BaseModel):
     access_token: str

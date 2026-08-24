@@ -47,6 +47,7 @@ class Settings(BaseSettings):
     DATABASE_URL_PSYCOPG: str
     DATABASE_URL_ASYNC: str        # <-- add this
     SECRET_KEY: str
+    ALGORITHM: str = "HS256"
 
     # Optional with defaults
     LLM_PROVIDER: str = "groq"
