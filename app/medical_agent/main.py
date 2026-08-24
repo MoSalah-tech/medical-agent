@@ -1,3 +1,5 @@
+import os 
+from pathlib import Path
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,8 +15,10 @@ from app.medical_agent.core.config import settings
 
 limiter = Limiter(key_func=get_remote_address)
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    
     # Create tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

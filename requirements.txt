@@ -5,6 +5,12 @@ python-multipart
 aiofiles
 python-dotenv
 
+
+# Static Files
+python-docx 
+pytesseract 
+Pillow
+
 # authentication
 asyncpg
 slowapi
@@ -29,9 +35,7 @@ psycopg[binary,pool]
 groq
 
 # RAG Components
-pgvector
-chromadb
-#faiss-cpu              # FAISS CPU version (use faiss-gpu if NVIDIA GPU available)
+langchain-postgres
 pypdf
 
 # Utilities

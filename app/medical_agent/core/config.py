@@ -5,7 +5,7 @@ Using pydantic-settings (not a plain class) means a missing required key
 fails immediately at startup with a clear message, instead of silently
 becoming "" and failing later as a confusing 401 from Groq/Gemini.
 """
-# import os 
+
 # from dotenv import load_dotenv
 
 
@@ -34,13 +34,13 @@ becoming "" and failing later as a confusing 401 from Groq/Gemini.
 # print("Project:", os.environ["LANGSMITH_PROJECT"])
 
 
-
+import os 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
-
+    UPLOAD_DIR: str = "uploads"  # Directory to store uploaded files
     # Required fields
     GROQ_API_KEY: str
     GEMINI_API_KEY: str
