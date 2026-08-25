@@ -26,7 +26,7 @@ async def voice_input(
         tmp.write(content)
         tmp_path = tmp.name
     try:
-        transcript = transcribe_audio(tmp_path)
+        transcript = await transcribe_audio(tmp_path)
     finally:
         os.unlink(tmp_path)
     graph = request.app.state.agent_graph
