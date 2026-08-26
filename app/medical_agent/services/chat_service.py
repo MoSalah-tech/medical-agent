@@ -1,6 +1,6 @@
 import uuid
 from typing import Optional
-from sqlalchemy import select
+from sqlalchemy import select,delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.medical_agent.db.models import Conversation
 from app.medical_agent.db.models import Message
@@ -31,7 +31,9 @@ async def process_text_message(
 
     if conversation is None:
         # Create new conversation
-        conversation = Conversation(user_id=user_id, session_id=thread_id)
+        # Use first 40 chars of the user's first message as title
+        title = text.strip()[:40] + ("..." if len(text.strip()) > 40 else "")
+        conversation = Conversation(user_id=user_id, session_id=thread_id,title=title)
         db.add(conversation)
         await db.commit()
         await db.refresh(conversation)
@@ -63,7 +65,36 @@ async def process_text_message(
     await db.commit()
 
     return ChatResponse(
-        response=agent_result.get("response", "No response"),
-        citations=agent_result.get("citations", []),
-        conversation_id=thread_id,
+    response=agent_result.get("response", "No response"),
+    citations=agent_result.get("citations", []),
+    conversation_id=str(conversation.id),
+    session_id=thread_id,
+)
+
+
+
+
+async def list_conversations(db: AsyncSession, user_id: str):
+    result = await db.execute(
+        select(Conversation)
+        .where(Conversation.user_id == user_id)
+        .order_by(Conversation.updated_at.desc())
     )
+    return result.scalars().all()
+
+async def delete_conversation(db: AsyncSession, conversation_id: uuid.UUID, user_id: str):
+    # Ensure conversation belongs to user
+    result = await db.execute(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user_id,
+        )
+    )
+    conv = result.scalar_one_or_none()
+    if not conv:
+        return False
+    # Delete messages first (cascade may handle it, but explicit okay)
+    await db.execute(delete(Message).where(Message.conversation_id == conversation_id))
+    await db.execute(delete(Conversation).where(Conversation.id == conversation_id))
+    await db.commit()
+    return True

@@ -1,6 +1,7 @@
 import os
 import tempfile
 from fastapi import APIRouter, Depends, Request, UploadFile, File
+from fastapi import Form 
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.medical_agent.db.sessions import get_db
 from app.medical_agent.schemas.chat import ChatResponse
@@ -13,10 +14,12 @@ router = APIRouter()
 
 @router.post("", response_model=ChatResponse)
 @limiter.limit("50/minute")
+ 
+
 async def voice_input(
     request: Request,
     audio: UploadFile = File(...),
-    session_id: str = None,
+    session_id: str = Form(None),
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):

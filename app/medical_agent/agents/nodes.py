@@ -95,11 +95,18 @@ async def retrieval_node(state: AgentState) -> AgentState:
     user_id = state.get("user_id") or "default"
     query = state.get("raw_query", "")
 
-    if not query:
-        return {**state, "documents_available": False, "retrieved_docs": [], "context": None}
-
     try:
         docs = await run_in_threadpool(rag_service.search, query, user_id)
+    except ValueError as exc:
+        # Collection not found → no documents have been ingested yet
+        logger.warning("No vector collection found, skipping retrieval: %s", exc)
+        return {
+            **state,
+            "documents_available": False,
+            "retrieved_docs": [],
+            "context": None,
+            "step_count": state.get("step_count", 0) + 1,
+        }
     except rag_service.RAGError as exc:
         logger.exception("Retrieval failed for session %s", state.get("session_id"))
         return {
@@ -111,7 +118,6 @@ async def retrieval_node(state: AgentState) -> AgentState:
         }
 
     context = "\n\n".join(f"[{d['source']}] {d['content']}" for d in docs) if docs else None
-
     return {
         **state,
         "documents_available": bool(docs),

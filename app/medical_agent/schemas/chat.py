@@ -8,4 +8,5 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     response: str
     citations: List[str] = []
-    conversation_id: Optional[str] = None
+    conversation_id: Optional[str] = None   # DB primary key
+    session_id: Optional[str] = None        # LangGraph thread id
