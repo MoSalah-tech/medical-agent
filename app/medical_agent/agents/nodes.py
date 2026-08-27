@@ -23,13 +23,19 @@ from app.medical_agent.agents.prompts import (
 )
 from app.medical_agent.agents.state import AgentState
 from app.medical_agent.core.config import *
-from app.medical_agent.services import rag_service, stt_service
+from app.medical_agent.services import rag_service, stt_service , web_search_service
 
 logger = logging.getLogger(__name__)
 
 _groq_client: Optional[Groq] = None
 
 _ROLE_MAP = {"human": "user", "ai": "assistant", "system": "system"}
+WEB_SEARCH_KEYWORDS = [
+    "latest", "recent", "current", "update", "guidelines", "treatment options",
+    "new drug", "new treatment", "side effects of", "what are the", "how to",
+    "covid", "vaccine", "news", "research", "studies",
+]
+
 
 
 def _get_groq_client() -> Groq:
@@ -49,9 +55,14 @@ def route_input(state: AgentState) -> str:
     return "stt" if state.get("input_mode") == "audio" else "safety_check"
 
 
+
+
+
 def route_after_safety(state: AgentState) -> str:
     if state.get("is_emergency"):
         return "emergency_response"
+    elif should_search_web(state.get("raw_query", "")):
+        return "web_search"
     elif state.get("needs_retrieval", True):
         return "retrieval"
     else:
@@ -80,6 +91,31 @@ def safety_check_node(state: AgentState) -> AgentState:
         "safety_flags": flags,
         "step_count": state.get("step_count", 0) + 1,
     }
+
+
+
+def should_search_web(query: str) -> bool:
+    """Return True if the query seems complex/current and could benefit from web search."""
+    q = query.lower()
+    # If query is long and contains asking for details beyond symptoms
+    if len(q.split()) > 12:
+        return True
+    # Check for keywords indicating need for current or factual info
+    return any(kw in q for kw in WEB_SEARCH_KEYWORDS)
+def web_search_node(state: AgentState) -> AgentState:
+    """Fetch web results for the current query."""
+    query = state.get("raw_query", "")
+    if not query:
+        return state
+
+    try:
+        results = web_search_service.search_web(query, max_results=3)
+    except Exception as exc:
+        logger.exception("Web search failed for session %s", state.get("session_id"))
+        return {**state, "web_results": []}
+
+    state["web_results"] = results
+    return state
 
 
 def emergency_response_node(state: AgentState) -> AgentState:
@@ -128,8 +164,27 @@ async def retrieval_node(state: AgentState) -> AgentState:
 
 async def generation_node(state: AgentState) -> AgentState:
     client = _get_groq_client()
+
+    web_context = ""
+    if state.get("web_results"):
+        for item in state["web_results"]:
+            web_context += f"[Web] {item['title']} ({item['url']})\n{item['content']}\n\n"
+
+    full_context = ""
+    if state.get("context"):
+        full_context += f"Personal health documents:\n{state['context']}\n\n"
+    if web_context:
+        full_context += f"Web search results:\n{web_context}\n\n"
+
     user_prompt = build_generation_prompt(
-        state.get("raw_query", ""), state.get("context"), state.get("documents_available", False)
+        state.get("raw_query", ""),
+        full_context,                  # ✅ now includes web + personal docs
+        state.get("documents_available", False)
+
+        
+        # ---> old context state.get("raw_query", ""), state.get("context"), state.get("documents_available", False)
+
+        
     )
     history = _to_groq_messages(state.get("messages", []))
 

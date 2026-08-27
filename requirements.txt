@@ -26,6 +26,8 @@ langgraph
 langchain-google-genai
 langchain-groq
 
+# Web search tool
+tavily-python
 # Memory checkpointing
 langgraph-checkpoint-postgres 
 psycopg[binary,pool]

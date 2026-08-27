@@ -21,6 +21,7 @@ class AgentState(TypedDict):
     messages: Annotated[List[BaseMessage], add_messages]
     session_id: str
     user_id: Optional[str]
+    web_results:List[dict]
 
     # ---- input handling -----------------------------------------------
     input_mode: Literal["text", "audio"]
@@ -68,6 +69,7 @@ def new_state(
         requires_disclaimer=False,
         needs_retrieval=True,
         documents_available=False,
+        web_results=[],
         retrieved_docs=[],
         context=None,
         response=None,

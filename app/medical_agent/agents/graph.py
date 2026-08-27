@@ -38,6 +38,8 @@ from app.medical_agent.agents.nodes import (
     route_input,
     safety_check_node,
     stt_node,
+    web_search_node,
+    should_search_web,
 )
 from app.medical_agent.agents.state import AgentState
 from app.medical_agent.core.config import *
@@ -49,6 +51,7 @@ def _build_graph_skeleton() -> StateGraph:
     graph.add_node("stt", stt_node)
     graph.add_node("safety_check", safety_check_node)
     graph.add_node("emergency_response", emergency_response_node)
+    graph.add_node("web_search", web_search_node)
     graph.add_node("retrieval", retrieval_node)
     graph.add_node("generation", generation_node)
 
@@ -62,9 +65,11 @@ def _build_graph_skeleton() -> StateGraph:
     {
         "emergency_response": "emergency_response",
         "retrieval": "retrieval",
+        "web_search": "web_search",
         "generation": "generation",   
     },
 )
+    graph.add_edge("web_search" , "retrieval")
     graph.add_edge("retrieval", "generation")
     graph.add_edge("generation", END)
     graph.add_edge("emergency_response", END)
