@@ -7,8 +7,9 @@ RUN npm install
 
 COPY . .
 
-# Set API URL before build (it's inlined at compile time)
 ENV NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV CI=true
 
 RUN npm run build
 
