@@ -1,23 +1,17 @@
-version: "3.9"
-
 services:
   backend:
     build:
-      context: ./medical_agent              # backend root (where requirements.txt and app/ are)
+      context: .               # root (where Dockerfile is)
     container_name: medical-agent-backend
     ports:
       - "8000:8000"
-    
-      # Copy your .env variables here or use env_file
     env_file:
-      - ".env"
-      
-
+      - .env                   # load variables from this file in the same directory
     restart: unless-stopped
 
   frontend:
     build:
-      context: ./medical-agent-frontend   # adjust path if different
+      context: ./medical-agent-frontend
     container_name: medical-agent-frontend
     ports:
       - "3000:3000"
