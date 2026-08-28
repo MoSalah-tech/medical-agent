@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .               # backend root (where requirements.txt and app/ are)
+    container_name: medical-agent-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Copy your .env variables here or use env_file
+      env_file:
+      - ".env"
+      
+
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./medical-agent-frontend   # adjust path if different
+    container_name: medical-agent-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
