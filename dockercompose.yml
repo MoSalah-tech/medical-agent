@@ -3,7 +3,7 @@ version: "3.9"
 services:
   backend:
     build:
-      context: .               # backend root (where requirements.txt and app/ are)
+      context: ./medical_agent              # backend root (where requirements.txt and app/ are)
     container_name: medical-agent-backend
     ports:
       - "8000:8000"
