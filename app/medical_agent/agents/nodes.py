@@ -68,7 +68,7 @@ def is_medical_query(query: str) -> bool:
     q= query.lower().strip()
     if not q :
         return False
-    if any(kw in q for kw in NON_MEDICAL_PATTERNS)and len(q.split)<= 5:
+    if any(kw in q for kw in NON_MEDICAL_PATTERNS) and len(q.split()) <= 5:
         return False
 
     return any(kw in q  for kw in MEDICAL_KEYWORDS)
