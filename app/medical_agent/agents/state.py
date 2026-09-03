@@ -30,6 +30,7 @@ class AgentState(TypedDict):
 
     # ---- safety / triage -------------------------------------------------
     is_emergency: bool
+    is_medical: bool
     safety_flags: List[str]
     requires_disclaimer: bool
 
@@ -65,6 +66,7 @@ def new_state(
         audio_path=audio_path,
         raw_query=query,
         is_emergency=False,
+        is_medical=True,
         safety_flags=[],
         requires_disclaimer=False,
         needs_retrieval=True,

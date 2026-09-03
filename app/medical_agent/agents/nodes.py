@@ -36,6 +36,53 @@ WEB_SEARCH_KEYWORDS = [
     "covid", "vaccine", "news", "research", "studies",
 ]
 
+MEDICAL_KEYWORDS = [
+    "pain", "ache", "fever", "cough", "sore", "symptom", "diagnos", "treat",
+    "medic", "doctor", "health", "ill", "sick", "disease", "injury", "wound",
+    "blood", "heart", "lung", "kidney", "liver", "diabetes", "hypertension",
+    "headache", "nausea", "dizzy", "vomit", "diarrhea", "constipation",
+    "rash", "allerg", "infection", "virus", "bacteria", "cancer", "tumor",
+    "pregnant", "depress", "anxiety", "mental", "therapy", "surgery",
+    "prescription", "pharmacy", "drug", "dosage", "side effect", "vaccine",
+    "covid", "flu", "cold", "asthma", "copd", "stroke", "heart attack",
+    "emergency", "urgent", "checkup", "lab result", "x-ray", "mri",
+    "blood pressure", "glucose", "cholesterol", "hba1c"
+]
+
+NON_MEDICAL_PATTERNS = [
+    "hello", "hi", "hey", "good morning", "good afternoon", "good evening",
+    "how are you", "what's up", "whats up", "thank", "thanks", "bye",
+    "who are you", "what can you do", "what is your name"
+]
+
+
+NON_MEDICAL_RESPONSE = (
+    "I'm a medical assistant and can only answer health-related questions. "
+    "Please ask me about symptoms, medications, medical conditions, or general health topics. "
+    "If you have a medical emergency, contact your local emergency services immediately."
+)
+
+
+
+def is_medical_query(query: str) -> bool:
+    q= query.lower().strip()
+    if not q :
+        return False
+    if any(kw in q for kw in NON_MEDICAL_PATTERNS)and len(q.split)<= 5:
+        return False
+
+    return any(kw in q  for kw in MEDICAL_KEYWORDS)
+
+
+
+def medical_filter_node(state: AgentState) -> AgentState:
+    query = state.get("raw_query", "")
+    is_medical = is_medical_query(query)
+    state["is_medical"] = is_medical 
+    if not is_medical:
+        state["response"] = NON_MEDICAL_RESPONSE
+        state["needs_retrieval"] = False
+    return state    
 
 
 def _get_groq_client() -> Groq:
@@ -61,12 +108,9 @@ def route_input(state: AgentState) -> str:
 def route_after_safety(state: AgentState) -> str:
     if state.get("is_emergency"):
         return "emergency_response"
-    elif should_search_web(state.get("raw_query", "")):
-        return "web_search"
-    elif state.get("needs_retrieval", True):
-        return "retrieval"
+    
     else:
-        return "generation"
+        return "medical_filter"
 
 
 # ---- nodes ---------------------------------------------------------------
