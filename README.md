@@ -4,6 +4,9 @@ An AI-powered medical assistant built with **FastAPI**, **LangGraph**, and **pgv
 
 > ⚠️ **Disclaimer:** This project is for educational and informational purposes only. It does not provide medical diagnosis or treatment. Always consult a licensed healthcare professional.
 
+
+**🔗 [Live Demo on Vercel](https://medical-agent-frontend-indol.vercel.app/)**
+
 ---
 
 ## Features
